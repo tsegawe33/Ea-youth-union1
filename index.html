@@ -1,289 +1,46 @@
-<!DOCTYPE html>
-<html lang="am">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EA Youth Union - Final Master Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div id="adm-n" class="adm-sub" style="display:none; margin-top:15px;">
+    <h4>አዲስ ማስታወቂያ/ዜና መጫኛ</h4>
+    <input id="nT" placeholder="የዜናው ርዕስ">
+    <textarea id="nD" rows="4" placeholder="የዜናው ዝርዝር መግለጫ"></textarea>
+    <button class="btn-action" onclick="saveNews()">ዜናውን ልቀቅ</button>
     
-    <style>
-        :root { --p: #0a4d1a; --s: #d4af37; --bg: #f4f7f6; --fSize: 19px; }
-        body { margin: 0; background: var(--bg); font-family: 'Noto Serif Ethiopic', serif; transition: 0.5s; }
-        header { background: var(--p); color: white; padding: 18px; text-align: center; border-bottom: 3px solid var(--s); position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        .container { max-width: 600px; margin: auto; padding: 15px; padding-bottom: 120px; }
-        .page { display: none; animation: fadeIn 0.5s ease; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.03); }
-        
-        /* Navigation */
-        .nav-bar { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: 94%; background: var(--p); border-radius: 50px; display: flex; justify-content: space-around; padding: 12px; border: 1px solid var(--s); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .nav-item { color: rgba(255,255,255,0.4); text-align: center; cursor: pointer; flex:1; transition: 0.3s; }
-        .nav-item.active { color: var(--s); transform: scale(1.1); }
-        .nav-item span { display: block; font-size: 10px; margin-top: 4px; font-weight: bold; }
-
-        /* Components */
-        .btn-action { background: var(--s); color: black; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.2s; }
-        .btn-action:active { transform: scale(0.97); }
-        input, textarea, select { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1.5px solid #eee; outline: none; font-family: inherit; }
-        
-        #map { height: 420px; width: 100%; border-radius: 18px; border: 2px solid var(--s); }
-        #vLyric { white-space: pre-line; line-height: 2.3; text-align: center; font-size: var(--fSize); color: #333; }
-        
-        .verse-box { background: linear-gradient(135deg, var(--p), #1e7d34); color: white; border-radius: 20px; padding: 25px; text-align: center; margin-bottom: 20px; position: relative; }
-        .reg-overlay { position: fixed; inset: 0; background: var(--p); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 30px; text-align: center; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .stat-card { background: #f9f9f9; padding: 10px; border-radius: 10px; text-align: center; border-left: 4px solid var(--s); }
-    </style>
-</head>
-<body>
-
-<div id="regOverlay" class="reg-overlay">
-    <img id="appLogo" src="icon.png" style="width: 90px; border-radius: 22px; margin-bottom: 25px; border: 3px solid var(--s);">
-    <h2>EA YOUTH UNION</h2>
-    <p style="opacity:0.8;">ለመቀጠል መረጃዎን ያስመዝግቡ</p>
-    <input id="rName" placeholder="ሙሉ ስም">
-    <input id="rPhone" type="tel" placeholder="ስልክ ቁጥር">
-    <select id="rRel">
-        <option value="">ሃይማኖት</option>
-        <option value="SDA">አድቬንቲስት</option>
-        <option value="Orthodox">ኦርቶዶክስ</option>
-        <option value="Protestant">ፕሮቴስታንት</option>
-        <option value="Catholic">ካቶሊክ</option>
-        <option value="Muslim">ሙስሊም</option>
-    </select>
-    <button class="btn-action" onclick="register()">መተግበሪያውን ክፈት</button>
+    <h4 style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;">የተለቀቁ ዜናዎች (ለማጥፋት ንካ)</h4>
+    <div id="adminNewsList" style="max-height:200px; overflow-y:auto;"></div>
 </div>
-
-<header>EA YOUTH UNION</header>
-
-<div class="container">
-    <div id="home" class="page active">
-        <div class="verse-box">
-            <i class="fas fa-quote-left" style="opacity:0.3; position:absolute; top:10px; left:15px; font-size:30px;"></i>
-            <p id="dailyVerse" style="font-size: 19px; font-weight: bold; margin: 10px 0;">"እግዚአብሔር ብርሃኔና መድኃኒቴ ነው፤ የሚያስፈራኝ ማን ነው?"</p>
-            <small id="verseRef" style="color:var(--s); font-weight:bold;">መዝሙር 27:1</small>
-        </div>
-        <div id="newsFeed"></div>
-    </div>
-
-    <div id="songs" class="page">
-        <button class="btn-action" style="margin-bottom:10px; background:#f0f0f0; color:#333;" onclick="downloadOffline()">📥 ሁሉንም ለOffline አውርድ</button>
-        <input type="text" id="sSearch" placeholder="መዝሙር በቁጥር ወይም በርዕስ..." onkeyup="searchSong(this.value)">
-        <div id="songList"></div>
-    </div>
-
-    <div id="calendar" class="page">
-        <div class="card" style="background:var(--p); color:white; text-align:center;"><h2 id="dateTxt" style="margin:0;"></h2></div>
-        <div class="card">
-            <h4><i class="fas fa-bell"></i> አላርም መቅጠሪያ</h4>
-            <input type="time" id="alTime">
-            <button class="btn-action" onclick="alert('አላርም ተመዝግቧል!')">አላርም ይቅጠሩ</button>
-        </div>
-    </div>
-
-    <div id="map-page" class="page">
-        <div class="card" style="padding:10px;">
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input id="mapSearch" placeholder="ቤተክርስቲያን ይፈልጉ..." style="margin:0;">
-                <button onclick="searchMap()" style="width:55px; background:var(--p); color:white; border:none; border-radius:10px;"><i class="fas fa-search"></i></button>
-            </div>
-            <div id="map"></div>
-        </div>
-    </div>
-
-    <div id="thanks" class="page">
-        <div id="galleryFeed"></div>
-        <div style="text-align:right; padding:20px;">
-            <i class="fas fa-bell" onclick="adminClick()" style="color:var(--s); cursor:pointer; font-size:22px; opacity:0.6;"></i>
-        </div>
-    </div>
-
-    <div id="admin" class="page">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>Admin Tunnel</h3>
-            <button onclick="showPage('thanks')" class="btn-action" style="width:auto; padding:8px 15px;">ዝጋ</button>
-        </div>
-        
-        <div class="card">
-            <h4>ጥቅስ እና ገጽታ (Edit)</h4>
-            <input id="vInput" placeholder="ጥቅስ"><input id="vRef" placeholder="ምንጭ">
-            <hr>
-            <label>Theme Color</label><input type="color" id="setCol">
-            <label>Logo URL</label><input id="setLogo" placeholder="Icon Link">
-            <button class="btn-action" onclick="saveAdminSettings()">ሁሉንም አዘምን</button>
-        </div>
-
-        <div class="card">
-            <h4>መዝሙር መጫኛ (Audio + Text)</h4>
-            <input id="sN" type="number" placeholder="ቁጥር"><input id="sT" placeholder="ርዕስ">
-            <textarea id="sL" rows="4" placeholder="ግጥም (በየመስመሩ)"></textarea>
-            <input id="sA" placeholder="የድምፅ ሊንክ (mp3 URL)">
-            <button class="btn-action" onclick="saveSong()">መዝሙር መዝግብ</button>
-        </div>
-
-        <div class="card">
-            <h4>ምስጋና / Gallery Edit</h4>
-            <input id="gU" placeholder="የምስል ሊንክ (Image URL)"><textarea id="gT" placeholder="መግለጫ"></textarea>
-            <button class="btn-action" onclick="saveDB('thanks',{img:gU.value,text:gT.value})">ጋለሪ ጫን</button>
-            <div id="adminGalList" style="margin-top:10px;"></div>
-        </div>
-
-        <div class="card">
-            <h4>ስታቲስቲክስ (አባላት)</h4>
-            <div id="statCount" class="stat-grid"></div>
-            <div id="uList" style="max-height:200px; overflow-y:auto; font-size:12px;"></div>
-        </div>
-    </div>
-
-    <div id="viewer" class="page">
-        <button onclick="showPage('songs')" class="btn-action" style="width:auto; padding:10px 20px;"><i class="fas fa-arrow-left"></i> ተመለስ</button>
-        <div class="card" style="margin-top:15px;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
-                <i class="fas fa-font"></i> <input type="range" min="15" max="35" value="19" oninput="changeFontSize(this.value)">
-            </div>
-            <h2 id="vT" style="text-align:center; color: var(--p);"></h2>
-            <audio id="mainAudio" controls style="width:100%; margin-bottom:20px; display:none;"></audio>
-            <div id="vLyric"></div>
-        </div>
-    </div>
-
-    <div style="text-align:center; opacity:0.3; font-size:10px; padding:20px;">© 2024 EA Youth Union - Professional Security Build</div>
-</div>
-
-<nav class="nav-bar">
-    <div class="nav-item active" onclick="showPage('home', this)"><i class="fas fa-home"></i><span>ቤት</span></div>
-    <div class="nav-item" onclick="showPage('songs', this)"><i class="fas fa-music"></i><span>መዝሙር</span></div>
-    <div class="nav-item" onclick="showPage('calendar', this)"><i class="fas fa-calendar-alt"></i><span>ካላንደር</span></div>
-    <div class="nav-item" onclick="showPage('map-page', this)"><i class="fas fa-map-marked-alt"></i><span>ካርታ</span></div>
-    <div class="nav-item" onclick="showPage('thanks', this)"><i class="fas fa-heart"></i><span>ምስጋና</span></div>
-</nav>
 
 <script>
-    const firebaseConfig = { databaseURL: "https://ea-youth-union-app-d1358-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let map;
-    window.onload = () => {
-        if(!localStorage.getItem('auth_FinalBuild')) document.getElementById('regOverlay').style.display='flex';
-        document.getElementById('dateTxt').innerText = new Date().toLocaleDateString('am-ET', {weekday:'long', month:'long', day:'numeric'});
-        loadData();
-        applySettings();
-        initMap();
-    };
-
-    function initMap() {
-        map = L.map('map').setView([9.0192, 38.7525], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        const sdaLocs = [
-            {n: "Filwoha SDA", l: [9.0192, 38.7525]},
-            {n: "Akaki SDA", l: [8.8833, 38.7833]},
-            {n: "Ghandi SDA", l: [9.0300, 38.7400]}
-        ];
-        sdaLocs.forEach(loc => L.marker(loc.l).addTo(map).bindPopup(loc.n));
-    }
-
-    async function searchMap() {
-        const q = document.getElementById('mapSearch').value;
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}+SDA+Ethiopia`);
-        const data = await res.json();
-        if(data[0]) map.setView([data[0].lat, data[0].lon], 14);
-    }
-
-    function register() {
-        const n = document.getElementById('rName').value, p = document.getElementById('rPhone').value, r = document.getElementById('rRel').value;
-        if(n && p.length >= 10 && r) {
-            db.ref('users').push({name:n, phone:p, religion:r});
-            localStorage.setItem('auth_FinalBuild', 'true');
-            document.getElementById('regOverlay').style.display='none';
+    // ዜናን ሴቭ ለማድረግ
+    function saveNews() {
+        const title = document.getElementById('nT').value;
+        const desc = document.getElementById('nD').value;
+        
+        if(title && desc) {
+            db.ref('news').push({
+                title: title,
+                desc: desc,
+                date: new Date().toISOString()
+            }).then(() => {
+                alert("ዜናው በተሳካ ሁኔታ ተለቅቋል!");
+                document.getElementById('nT').value = "";
+                document.getElementById('nD').value = "";
+            }).catch(err => alert("ስህተት ተፈጥሯል: " + err));
+        } else {
+            alert("እባክህ ርዕስ እና ዝርዝር መግለጫ አስገባ");
         }
     }
 
-    function loadData() {
-        // News
-        db.ref('news').on('value', s => {
-            let h = ""; s.forEach(c => h = `<div class="card"><h3>${c.val().title}</h3><p>${c.val().desc}</p></div>` + h);
-            document.getElementById('newsFeed').innerHTML = h;
+    // ዜናዎችን ከአድሚን ሊስት ውስጥ ለመጫን ( loadData ውስጥ መካተት አለበት)
+    function updateAdminNewsList(snapshot) {
+        let ah = "";
+        snapshot.forEach(c => {
+            ah += `
+                <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:13px;">${c.val().title}</span>
+                    <button onclick="deleteItem('news','${c.key}')" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>`;
         });
-        // Songs
-        db.ref('songs').orderByChild('no').on('value', s => {
-            let h = ""; s.forEach(c => h += `<div class="card" onclick="openSong('${c.val().title}',\`${c.val().lyric}\`,'${c.val().audio}')"><b>${c.val().no}. ${c.val().title}</b></div>`);
-            document.getElementById('songList').innerHTML = h;
-        });
-        // Gallery
-        db.ref('thanks').on('value', s => {
-            let h = "", ah = "";
-            s.forEach(c => {
-                h += `<div class="card"><img src="${c.val().img}" style="width:100%; border-radius:15px;"><p>${c.val().text}</p></div>`;
-                ah += `<div style="padding:5px; border-bottom:1px solid #eee;">${c.val().text.substring(0,15)}... <i class="fas fa-trash" style="color:red; float:right" onclick="deleteItem('thanks','${c.key}')"></i></div>`;
-            });
-            document.getElementById('galleryFeed').innerHTML = h;
-            document.getElementById('adminGalList').innerHTML = ah;
-        });
-        // Stats & Users
-        db.ref('users').on('value', s => {
-            let h = "", counts = {};
-            s.forEach(c => {
-                const r = c.val().religion; counts[r] = (counts[r] || 0) + 1;
-                h += `<div style="padding:5px; border-bottom:1px solid #eee;">${c.val().name} (${r}) <i class="fas fa-trash" style="color:red; float:right" onclick="deleteItem('users','${c.key}')"></i></div>`;
-            });
-            document.getElementById('uList').innerHTML = h;
-            let ch = ""; for(let x in counts) ch += `<div class="stat-card"><b>${x}</b><br>${counts[x]}</div>`;
-            document.getElementById('statCount').innerHTML = ch;
-        });
-        // Verse
-        db.ref('dailyVerse').on('value', s => {
-            if(s.val()){ document.getElementById('dailyVerse').innerText = s.val().text; document.getElementById('verseRef').innerText = s.val().ref; }
-        });
+        document.getElementById('adminNewsList').innerHTML = ah;
     }
-
-    function openSong(t, l, a) {
-        document.getElementById('vT').innerText = t;
-        document.getElementById('vLyric').innerText = l;
-        const aud = document.getElementById('mainAudio');
-        if(a && a !== "undefined") { aud.src = a; aud.style.display = 'block'; } else { aud.style.display = 'none'; }
-        showPage('viewer');
-    }
-
-    function saveSong() {
-        db.ref('songs').push({no: parseInt(sN.value), title: sT.value, lyric: sL.value, audio: sA.value}).then(() => { alert("ተመዝግቧል!"); sN.value=sT.value=sL.value=sA.value=""; });
-    }
-
-    function saveAdminSettings() {
-        if(vInput.value) db.ref('dailyVerse').set({text: vInput.value, ref: vRef.value});
-        db.ref('appSettings').update({color: setCol.value, logo: setLogo.value}).then(() => alert("ተዘምኗል!"));
-    }
-
-    function applySettings() {
-        db.ref('appSettings').on('value', s => {
-            if(s.val()) {
-                if(s.val().color) document.documentElement.style.setProperty('--p', s.val().color);
-                if(s.val().logo) document.getElementById('appLogo').src = s.val().logo;
-            }
-        });
-    }
-
-    function showPage(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
-        if(id === 'map-page') setTimeout(() => map.invalidateSize(), 400);
-        window.scrollTo(0,0);
-    }
-
-    let cl = 0;
-    function adminClick() { cl++; if(cl === 3) { if(prompt("Security Key:") === "ttse9@we33") showPage('admin'); cl = 0; } setTimeout(() => cl = 0, 3000); }
-    function deleteItem(p, k) { if(confirm("ይጥፋ?")) db.ref(p).child(k).remove(); }
-    function changeFontSize(v) { document.documentElement.style.setProperty('--fSize', v + 'px'); }
-    function saveDB(p, d) { db.ref(p).push(d).then(() => alert("ተሳክቷል!")); }
-    function searchSong(q) { let qry = q.toLowerCase(); document.querySelectorAll('#songList .card').forEach(i => i.style.display = i.innerText.toLowerCase().includes(qry) ? 'block' : 'none'); }
-    function downloadOffline() { if(confirm("ሁሉንም ዳታ ለOffline አውርድ?")) alert("በማውረድ ላይ ነው..."); }
 </script>
-</body>
-</html>
